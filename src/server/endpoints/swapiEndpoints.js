@@ -1,4 +1,4 @@
-const { sequelize: { models: { swPeople } } } = require('../../app/db');
+const { sequelize: { models: { swPeople, swPlanet } } } = require('../../app/db');
 
 const applySwapiEndpoints = (server, app) => {
 
@@ -17,7 +17,7 @@ const applySwapiEndpoints = (server, app) => {
                 name, mass, height, homeworld,
             } = await app.swapiFunctions.genericRequest(url, 'GET', null);
 
-            const {  name: homeworld_name } = await app.swapiFunctions.genericRequest(homeworld, 'GET', null);
+            const { name: homeworld_name } = await app.swapiFunctions.genericRequest(homeworld, 'GET', null);
             return res.json({
                 name, mass, height, homeworld_name, homeworld_id: homeworld.replace(/[^0-9]/g, ''),
             });
@@ -33,7 +33,26 @@ const applySwapiEndpoints = (server, app) => {
     });
 
     server.get('/hfswapi/getPlanet/:id', async (req, res) => {
-        res.sendStatus(501);
+
+        const url = `https://swapi.dev/api/planets/${req.params.id}`;
+        const planet = await swPlanet.findByPk(req.params.id);
+
+        if (planet === null) {
+            const {
+                name, gravity,
+            } = await app.swapiFunctions.genericRequest(url, 'GET', null);
+            return res.json({
+                name, gravity: gravity.split(' ')[0],
+            });
+        }
+
+        const {
+            name, gravity,
+        } = planet;
+
+        return res.json({
+            name, gravity,
+        });
     });
 
     server.get('/hfswapi/getWeightOnPlanetRandom', async (req, res) => {
