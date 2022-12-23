@@ -1,4 +1,4 @@
-
+const { sequelize: { models: { swPeople } } } = require('../../app/db');
 
 const applySwapiEndpoints = (server, app) => {
 
@@ -8,7 +8,28 @@ const applySwapiEndpoints = (server, app) => {
     });
 
     server.get('/hfswapi/getPeople/:id', async (req, res) => {
-        res.sendStatus(501);
+
+        const url = `https://swapi.dev/api/people/${req.params.id}`;
+        const person = await swPeople.findByPk(req.params.id);
+
+        if (person === null) {
+            const {
+                name, mass, height, homeworld,
+            } = await app.swapiFunctions.genericRequest(url, 'GET', null);
+
+            const {  name: homeworld_name } = await app.swapiFunctions.genericRequest(homeworld, 'GET', null);
+            return res.json({
+                name, mass, height, homeworld_name, homeworld_id: homeworld.replace(/[^0-9]/g, ''),
+            });
+        }
+
+        const {
+            name, mass, height, homeworld_name, homeworld_id,
+        } = person;
+
+        return res.json({
+            name, mass, height, homeworld_name, homeworld_id,
+        });
     });
 
     server.get('/hfswapi/getPlanet/:id', async (req, res) => {
